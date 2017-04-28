@@ -24,51 +24,22 @@ use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Query\Parameter;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
-use JMS\DiExtraBundle\Annotation as DI;
 use JMS\JobQueueBundle\Entity\Job;
 use JMS\JobQueueBundle\Event\StateChangeEvent;
 use JMS\JobQueueBundle\Retry\ExponentialRetryScheduler;
 use JMS\JobQueueBundle\Retry\RetryScheduler;
 use Symfony\Bridge\Doctrine\RegistryInterface;
+use Symfony\Component\DependencyInjection\ContainerAwareInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use DateTime;
 use Doctrine\DBAL\Connection;
 
-class JobRepository extends EntityRepository
+class JobRepository extends EntityRepository implements ContainerAwareInterface
 {
     private $dispatcher;
     private $registry;
     private $retryScheduler;
-
-    /**
-     * @DI\InjectParams({
-     *     "dispatcher" = @DI\Inject("event_dispatcher"),
-     * })
-     */
-    public function setDispatcher(EventDispatcherInterface $dispatcher)
-    {
-        $this->dispatcher = $dispatcher;
-    }
-
-    /**
-     * @DI\InjectParams({
-     *     "retryScheduler" = @DI\Inject("jms_job_queue.retry_scheduler"),
-     * })
-     */
-    public function setRetryScheduler(RetryScheduler $retryScheduler)
-    {
-        $this->retryScheduler = $retryScheduler;
-    }
-
-    /**
-     * @DI\InjectParams({
-     *     "registry" = @DI\Inject("doctrine"),
-     * })
-     */
-    public function setRegistry(RegistryInterface $registry)
-    {
-        $this->registry = $registry;
-    }
 
     public function findJob($command, array $args = array())
     {
@@ -442,9 +413,20 @@ class JobRepository extends EntityRepository
         $result = $this->_em->createQuery("SELECT j.queue FROM JMSJobQueueBundle:Job j WHERE j.state IN (:availableStates) AND j.queue = :queue")
             ->setParameter('availableStates', array(Job::STATE_RUNNING, Job::STATE_NEW, Job::STATE_PENDING))
             ->setParameter('queue', $jobQueue)
-            ->setMaxResults(1)
-            ->getOneOrNullResult();
+            ->getResult();
 
         return count($result);
+    }
+
+    /**
+     * Sets the container.
+     *
+     * @param ContainerInterface|null $container A ContainerInterface instance or null
+     */
+    public function setContainer(ContainerInterface $container = null)
+    {
+        $this->dispatcher = $container->get('event_dispatcher');
+        $this->retryScheduler = $container->get('jms_job_queue.retry_scheduler');
+        $this->registry = $container->get('doctrine');
     }
 }
