@@ -51,7 +51,8 @@ class JobController
         $jobFilter = JobFilter::fromRequest($request);
 
         $qb = $this->getEm()->createQueryBuilder();
-        $qb->select('j')->from('JMSJobQueueBundle:Job', 'j')
+        $qb->select('j', 'd')->from('JMSJobQueueBundle:Job', 'j')
+            ->leftJoin('j.dependencies', 'd')
             ->where($qb->expr()->isNull('j.originalJob'))
             ->orderBy('j.id', 'desc');
 
