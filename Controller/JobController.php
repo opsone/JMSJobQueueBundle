@@ -103,7 +103,7 @@ class JobController
             $class = ClassUtils::getClass($entity);
             $relatedEntities[] = array(
                 'class' => $class,
-                'id' => json_encode($this->registry->getManagerForClass($class)->getClassMetadata($class)->getIdentifierValues($entity)),
+                'id' => json_encode($this->get('registry')->getManagerForClass($class)->getClassMetadata($class)->getIdentifierValues($entity)),
                 'raw' => $entity,
             );
         }
@@ -182,7 +182,7 @@ class JobController
     /** @return \Doctrine\ORM\EntityManager */
     private function getEm()
     {
-        return $this->registry->getManagerForClass('JMSJobQueueBundle:Job');
+        return $this->get('registry')->getManagerForClass('JMSJobQueueBundle:Job');
     }
 
     /** @return \JMS\JobQueueBundle\Entity\Repository\JobRepository */
