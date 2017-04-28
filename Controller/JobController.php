@@ -102,7 +102,7 @@ class JobController
             $class = ClassUtils::getClass($entity);
             $relatedEntities[] = array(
                 'class' => $class,
-                'id' => json_encode($this->get('registry')->getManagerForClass($class)->getClassMetadata($class)->getIdentifierValues($entity)),
+                'id' => json_encode($this->registry->getManagerForClass($class)->getClassMetadata($class)->getIdentifierValues($entity)),
                 'raw' => $entity,
             );
         }
@@ -110,7 +110,7 @@ class JobController
         $statisticData = $statisticOptions = array();
         if ($this->statisticsEnabled) {
             $dataPerCharacteristic = array();
-            foreach ($this->get('registry')->getManagerForClass('JMSJobQueueBundle:Job')->getConnection()->query("SELECT * FROM jms_job_statistics WHERE job_id = ".$job->getId()) as $row) {
+            foreach ($this->getEm()->getConnection()->query("SELECT * FROM jms_job_statistics WHERE job_id = ".$job->getId()) as $row) {
                 $dataPerCharacteristic[$row['characteristic']][] = array(
                     // hack because postgresql lower-cases all column names.
                     array_key_exists('createdAt', $row) ? $row['createdAt'] : $row['createdat'],
@@ -181,7 +181,7 @@ class JobController
     /** @return \Doctrine\ORM\EntityManager */
     private function getEm()
     {
-        return $this->get('registry')->getManagerForClass('JMSJobQueueBundle:Job');
+        return $this->registry->getManagerForClass('JMSJobQueueBundle:Job');
     }
 
     /** @return \JMS\JobQueueBundle\Entity\Repository\JobRepository */
